@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>{{ site.tagline }}</h1>
+<ul class="grid">
+{% for p in products %}
+  <li><a class="card" href="{{ root }}p/{{ p.slug }}/index.html">
+    {% if p.images %}<img src="{{ root }}{{ p.images[0] }}" alt="{{ p.title }}" loading="lazy">{% else %}<div class="ph"></div>{% endif %}
+    <h2>{{ p.title }}</h2><p>{{ p.tagline }}</p>
+  </a></li>
+{% else %}
+  <li>עדיין אין מוצרים. שלחו קישור לבוט בטלגרם כדי להוסיף את הראשון.</li>
+{% endfor %}
+</ul>
+{% endblock %}

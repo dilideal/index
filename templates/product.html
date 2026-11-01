@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}{{ p.title }} | {{ site.name }}{% endblock %}
+{% block desc %}{{ p.tagline }}{% endblock %}
+{% block body %}
+<article class="product">
+  <div>
+    {% if p.images %}
+      <img id="main" class="main-img" src="{{ root }}{{ p.images[0] }}" alt="{{ p.title }}">
+      {% if p.images|length > 1 %}
+      <div class="thumbs">{% for im in p.images %}<img src="{{ root }}{{ im }}" alt="" onclick="document.getElementById('main').src=this.src">{% endfor %}</div>
+      {% endif %}
+    {% else %}<div class="ph"></div>{% endif %}
+  </div>
+  <div>
+    <h1>{{ p.title }}</h1>
+    <p class="tagline">{{ p.tagline }}</p>
+    {% for para in p.description %}<p>{{ para }}</p>{% endfor %}
+    {% if p.features %}<ul class="features">{% for f in p.features %}<li>{{ f }}</li>{% endfor %}</ul>{% endif %}
+    <p><a class="btn" href="{{ p.url }}" target="_blank" rel="sponsored nofollow noopener">לצפייה ורכישה ב-AliExpress</a></p>
+  </div>
+</article>
+{% endblock %}
