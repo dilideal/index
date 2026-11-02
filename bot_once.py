@@ -3,18 +3,17 @@
 import os, re, json, shutil, datetime, pathlib, logging
 import requests
 from bs4 import BeautifulSoup
-from anthropic import Anthropic
 
 ROOT = pathlib.Path(__file__).parent
 TOKEN = os.environ["TELEGRAM_TOKEN"]
 ALLOWED = int(os.environ["ALLOWED_USER_ID"])
 SITE_URL = os.environ.get("SITE_URL", "").rstrip("/")
-MODEL = os.environ.get("CLAUDE_MODEL", "claude-sonnet-5-5")
+XAI_KEY = os.environ["XAI_API_KEY"]
+MODEL = os.environ.get("GROK_MODEL") or "grok-4"
 API = f"https://api.telegram.org/bot{TOKEN}"
 FILES = f"https://api.telegram.org/file/bot{TOKEN}"
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36"}
 IMG_RE = re.compile(r"\.(jpe?g|png|webp)(\?|$)", re.I)
-claude = Anthropic()
 logging.basicConfig(level=logging.INFO)
 
 SYSTEM = """אתה כותב תוכן לעמודי מוצר באתר שיווק שותפים בעברית.
@@ -45,9 +44,14 @@ def page_info(url):
         return {}
 
 def generate(notes, info):
-    msg = claude.messages.create(model=MODEL, max_tokens=1500, system=SYSTEM,
-        messages=[{"role": "user", "content": json.dumps({"notes": notes, "page": info}, ensure_ascii=False)}])
-    raw = msg.content[0].text
+    r = requests.post("https://api.x.ai/v1/chat/completions",
+        headers={"Authorization": f"Bearer {XAI_KEY}"}, timeout=120,
+        json={"model": MODEL, "temperature": 0.4, "messages": [
+            {"role": "system", "content": SYSTEM},
+            {"role": "user", "content": json.dumps({"notes": notes, "page": info}, ensure_ascii=False)}]})
+    if not r.ok:
+        raise RuntimeError(f"Grok API {r.status_code}: {r.text[:200]}")
+    raw = r.json()["choices"][0]["message"]["content"]
     return json.loads(raw[raw.index("{"): raw.rindex("}") + 1])
 
 def save_image(slug, n, content):
