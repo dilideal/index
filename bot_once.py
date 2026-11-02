@@ -8,8 +8,9 @@ ROOT = pathlib.Path(__file__).parent
 TOKEN = os.environ["TELEGRAM_TOKEN"]
 ALLOWED = int(os.environ["ALLOWED_USER_ID"])
 SITE_URL = os.environ.get("SITE_URL", "").rstrip("/")
-XAI_KEY = os.environ["XAI_API_KEY"]
-MODEL = os.environ.get("GROK_MODEL") or "grok-4"
+LLM_KEY = os.environ["LLM_API_KEY"]
+LLM_URL = (os.environ.get("LLM_BASE_URL") or "https://generativelanguage.googleapis.com/v1beta/openai").rstrip("/")
+MODEL = os.environ["LLM_MODEL"]
 API = f"https://api.telegram.org/bot{TOKEN}"
 FILES = f"https://api.telegram.org/file/bot{TOKEN}"
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36"}
@@ -44,13 +45,13 @@ def page_info(url):
         return {}
 
 def generate(notes, info):
-    r = requests.post("https://api.x.ai/v1/chat/completions",
-        headers={"Authorization": f"Bearer {XAI_KEY}"}, timeout=120,
+    r = requests.post(f"{LLM_URL}/chat/completions",
+        headers={"Authorization": f"Bearer {LLM_KEY}"}, timeout=120,
         json={"model": MODEL, "temperature": 0.4, "messages": [
             {"role": "system", "content": SYSTEM},
             {"role": "user", "content": json.dumps({"notes": notes, "page": info}, ensure_ascii=False)}]})
     if not r.ok:
-        raise RuntimeError(f"Grok API {r.status_code}: {r.text[:200]}")
+        raise RuntimeError(f"LLM API {r.status_code}: {r.text[:200]}")
     raw = r.json()["choices"][0]["message"]["content"]
     return json.loads(raw[raw.index("{"): raw.rindex("}") + 1])
 

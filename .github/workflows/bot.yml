@@ -15,8 +15,9 @@ jobs:
     timeout-minutes: 5
     env:
       TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-      XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
-      GROK_MODEL: ${{ secrets.GROK_MODEL }}
+      LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+      LLM_BASE_URL: ${{ secrets.LLM_BASE_URL }}
+      LLM_MODEL: ${{ secrets.LLM_MODEL }}
       ALLOWED_USER_ID: ${{ secrets.ALLOWED_USER_ID }}
       SITE_URL: ${{ secrets.SITE_URL }}
     steps:
