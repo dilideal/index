@@ -1,0 +1,49 @@
+name: telegram-bot
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch: {}
+concurrency:
+  group: telegram-bot
+  cancel-in-progress: false
+permissions:
+  contents: write
+  actions: write
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      ALLOWED_USER_ID: ${{ secrets.ALLOWED_USER_ID }}
+      SITE_URL: ${{ secrets.SITE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-bot.txt
+      - run: pip install -r requirements-bot.txt
+      - name: Process Telegram messages
+        run: python bot_once.py
+      - name: Commit and trigger deploy
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git config user.name "affiliate-bot"
+            git config user.email "bot@users.noreply.github.com"
+            git add -A
+            git commit -m "update products via telegram"
+            git pull --rebase
+            git push
+            gh workflow run deploy.yml --ref main
+          fi
+      - name: Notify on failure
+        if: failure()
+        run: >
+          curl -s "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage"
+          -d chat_id="${ALLOWED_USER_ID}"
+          -d text="הפרסום נכשל. בדוק את לשונית Actions בריפו."
