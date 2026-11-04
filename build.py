@@ -18,6 +18,12 @@ products = sorted(
     key=lambda p: p.get("date", ""), reverse=True,
 )
 
+order_file = ROOT / "order.json"
+order = json.loads(order_file.read_text("utf-8-sig")).get("order", []) if order_file.exists() else []
+pos = {slug: i for i, slug in enumerate(order)}
+# מוצרים שלא ברשימת הסדר (חדשים) מופיעים ראשונים, אחריהם לפי הסדר שנקבע
+products.sort(key=lambda p: (p["slug"] in pos, pos.get(p["slug"], 0)))
+
 def render(template, path, **ctx):
     dest = OUT / path
     dest.parent.mkdir(parents=True, exist_ok=True)
